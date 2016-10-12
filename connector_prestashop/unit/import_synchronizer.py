@@ -14,11 +14,14 @@ from .backend_adapter import GenericAdapter
 from .exception import OrderImportRuleRetry
 from openerp.addons.connector.exception import FailedJobError
 from openerp.addons.connector.exception import NothingToDoJob
-from prestapyt import PrestaShopWebServiceError
 from ..connector import add_checkpoint
 
-
 _logger = logging.getLogger(__name__)
+
+try:
+    from prestapyt import PrestaShopWebServiceError
+except ImportError:
+    _logger.debug('Can not `from prestapyt import PrestaShopWebServiceError`.')
 
 
 class PrestashopImportSynchronizer(Importer):

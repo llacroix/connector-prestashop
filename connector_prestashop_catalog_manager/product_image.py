@@ -6,10 +6,10 @@ from openerp.addons.connector.event import on_record_write, on_record_unlink
 from openerp.addons.connector.connector import Binder
 from openerp.addons.connector.unit.mapper import mapping
 
-from openerp.addons.connector_prestashop.unit.export_synchronizer import (
+from openerp.addons.connector_prestashop.unit.exporter import (
     PrestashopExporter,
     export_record)
-from openerp.addons.connector_prestashop.unit.delete_synchronizer import (
+from openerp.addons.connector_prestashop.unit.deleter import (
     export_delete_record
 )
 

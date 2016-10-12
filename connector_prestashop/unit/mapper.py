@@ -5,7 +5,6 @@ from decimal import Decimal
 
 from openerp.tools.translate import _
 from openerp.addons.connector.unit.mapper import (
-    mapping,
     ImportMapper,
     ExportMapper
 )

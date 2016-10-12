@@ -6,19 +6,21 @@ from datetime import timedelta
 from openerp.addons.connector.event import on_record_create, on_record_write
 from openerp.addons.connector.unit.mapper import mapping
 
-from openerp.addons.connector_prestashop.unit.import_synchronizer import \
-    TemplateRecordImport
+from openerp.addons.connector_prestashop.models.product_template.importer \
+    import TemplateRecordImport
 
-from openerp.addons.connector_prestashop.unit.export_synchronizer import (
+from openerp.addons.connector_prestashop.unit.exporter import (
     export_record,
     TranslationPrestashopExporter
 )
 from openerp.addons.connector_prestashop.unit.mapper import (
     TranslationPrestashopExportMapper,
 )
-from openerp.addons.connector_prestashop.consumer import delay_export
+from openerp.addons.connector_prestashop.consumer import (
+    delay_export,
+    INVENTORY_FIELDS
+)
 from openerp.addons.connector_prestashop.backend import prestashop
-from openerp.addons.connector_prestashop.product import INVENTORY_FIELDS
 
 import openerp.addons.decimal_precision as dp
 import unicodedata

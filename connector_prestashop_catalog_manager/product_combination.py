@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
+import logging
+
 from openerp.addons.connector.event import on_record_create, on_record_write
 from openerp.addons.connector.unit.mapper import mapping
 
-from openerp.addons.connector_prestashop.unit.export_synchronizer import (
+from openerp.addons.connector_prestashop.unit.exporter import (
     TranslationPrestashopExporter,
     export_record
 )
 from openerp.addons.connector_prestashop.unit.mapper import \
     TranslationPrestashopExportMapper
-from openerp.addons.connector_prestashop.unit.delete_synchronizer import (
+from openerp.addons.connector_prestashop.unit.deleter import (
     export_delete_record
 )
 from openerp.addons.connector_prestashop.backend import prestashop
-from openerp.addons.connector_prestashop.product import INVENTORY_FIELDS
+from openerp.addons.connector_prestashop.consumer import INVENTORY_FIELDS
 from openerp import models, fields
 from collections import OrderedDict
-import logging
 
 EXCLUDE_FIELDS = ['list_price', 'margin']
 
