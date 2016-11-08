@@ -3,9 +3,9 @@
 
 import os.path
 from openerp.addons.connector.event import on_record_write, on_record_unlink
-from openerp.addons.connector.connector import Binder
 from openerp.addons.connector.unit.mapper import mapping
 
+from openerp.addons.connector_prestashop.unit.binder import PrestashopBinder
 from openerp.addons.connector_prestashop.unit.exporter import (
     PrestashopExporter,
     export_record)
@@ -50,13 +50,13 @@ def product_image_unlink(session, model_name, record_id):
                 lambda x: x.backend_id == binding.backend_id)
             env_product = get_environment(
                 session, 'prestashop.product.template', binding.backend_id.id)
-            binder_product = env_product.get_connector_unit(Binder)
+            binder_product = env_product.get_connector_unit(PrestashopBinder)
             external_product_id = binder_product.to_backend(
                 product_template.id)
 
             env = get_environment(
                 session, binding._name, binding.backend_id.id)
-            binder = env.get_connector_unit(Binder)
+            binder = env.get_connector_unit(PrestashopBinder)
             external_id = binder.to_backend(binding.id)
             resource = 'images/products/%s' % (external_product_id)
             if external_id:
