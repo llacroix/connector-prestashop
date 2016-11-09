@@ -48,21 +48,24 @@ def product_image_unlink(session, model_name, record_id):
         if product.exists():
             product_template = product.prestashop_bind_ids.filtered(
                 lambda x: x.backend_id == binding.backend_id)
-            env_product = get_environment(
-                session, 'prestashop.product.template', binding.backend_id.id)
-            binder_product = env_product.get_connector_unit(PrestashopBinder)
-            external_product_id = binder_product.to_backend(
-                product_template.id)
-
-            env = get_environment(
-                session, binding._name, binding.backend_id.id)
-            binder = env.get_connector_unit(PrestashopBinder)
-            external_id = binder.to_backend(binding.id)
-            resource = 'images/products/%s' % (external_product_id)
-            if external_id:
-                export_delete_record.delay(
-                    session, binding._name, binding.backend_id.id,
-                    external_id, resource)
+            if product_template:
+                env_product = get_environment(
+                    session, 'prestashop.product.template',
+                    binding.backend_id.id)
+                binder_product = env_product.get_connector_unit(
+                    PrestashopBinder)
+                external_product_id = binder_product.to_backend(
+                    product_template.id)
+    
+                env = get_environment(
+                    session, binding._name, binding.backend_id.id)
+                binder = env.get_connector_unit(PrestashopBinder)
+                external_id = binder.to_backend(binding.id)
+                resource = 'images/products/%s' % (external_product_id)
+                if external_id:
+                    export_delete_record.delay(
+                        session, binding._name, binding.backend_id.id,
+                        external_id, resource)
 
 
 class ProductImage(models.Model):
