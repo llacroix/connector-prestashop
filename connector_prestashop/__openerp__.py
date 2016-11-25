@@ -18,6 +18,7 @@
         "purchase",
         "product_variant_supplierinfo",
         "product_variant_cost_price",
+        "stock",
     ],
     "external_dependencies": {
         'python': [

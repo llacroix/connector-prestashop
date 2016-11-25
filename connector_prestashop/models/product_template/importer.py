@@ -297,8 +297,14 @@ class ProductInventoryBatchImport(DelayedBatchImporter):
 
     def _run_page(self, filters, **kwargs):
         records = self.backend_adapter.get(filters)
-        for record in records['stock_availables']['stock_available']:
+        records_iter = records['stock_availables']['stock_available']
+
+        if isinstance(records_iter, dict):
+            records_iter = [records_iter]
+
+        for record in records_iter:
             self._import_record(record, **kwargs)
+
         return records['stock_availables']['stock_available']
 
     def _import_record(self, record, **kwargs):
@@ -331,10 +337,12 @@ class ProductInventoryImport(PrestashopImporter):
             all_qty += int(quantity['quantity'])
         return all_qty
 
-    def _get_template(self, record):
+    def _get_product(self, record):
         if record['id_product_attribute'] == '0':
+            # Product has no variant
             binder = self.binder_for('prestashop.product.template')
-            return binder.to_odoo(record['id_product'], unwrap=True)
+            template = binder.to_odoo(record['id_product'], unwrap=True)
+            return template.product_variant_ids[0]
         binder = self.binder_for('prestashop.product.combination')
         return binder.to_odoo(record['id_product_attribute'], unwrap=True)
 
@@ -347,20 +355,21 @@ class ProductInventoryImport(PrestashopImporter):
                 'prestashop.product.combination')
 
         qty = self._get_quantity(record)
-        if qty < 0:
-            qty = 0
-        template = self._get_template(record)
+        #if qty < 0:
+        #    qty = 0
+
+        product = self._get_product(record)
 
         vals = {
             'location_id': self.backend_record.warehouse_id.lot_stock_id.id,
-            'product_id': template.id,
+            'product_id': product.id,
             'new_quantity': qty,
         }
         template_qty_id = self.session.env['stock.change.product.qty'].create(
             vals)
         template_qty_id.with_context(
-            active_id=template.id).change_product_qty()
-
+            active_id=product.id).change_product_qty()
+        template_qty_id.unlink()
 
 @prestashop
 class TemplateRecordImport(TranslatableRecordImporter):
