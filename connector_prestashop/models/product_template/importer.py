@@ -252,6 +252,22 @@ class TemplateMapper(ImportMapper):
         mapper = self.unit_for(ManufacturerProductImportMapper)
         return mapper.map_record(record).values(**self.options)
 
+    @mapping
+    def tags_to_text(self, record):
+        associations = record.get('associations', {})
+        tags = associations.get('tags', {}).get(
+            self.backend_record.get_version_ps_key('tag'), [])
+        tag_adapter = self.unit_for(GenericAdapter, '_prestashop_product_tag')
+        if not isinstance(tags, list):
+            tags = [tags]
+        if tags:
+            ps_tags = tag_adapter.search(filters={
+                'filter[id]': '[%s]' % '|'.join(x['id'] for x in tags),
+                'display': '[name]'
+            })
+            if ps_tags:
+                return {'tags': ','.join(x['name'] for x in ps_tags)}
+
 
 @prestashop
 class ManufacturerProductImportMapper(ImportMapper):
