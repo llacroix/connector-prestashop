@@ -95,9 +95,9 @@ class ProductProduct(models.Model):
                     combination_binding.recompute_prestashop_qty()
             # Recompute qty in product template binding if any combination
             # if modified
-            for prestashop_product in \
-                    product.product_tmpl_id.prestashop_bind_ids:
-                prestashop_product.recompute_prestashop_qty()
+            #for prestashop_product in \
+            #        product.product_tmpl_id.prestashop_bind_ids:
+            #    prestashop_product.recompute_prestashop_qty()
 
     @api.multi
     def update_prestashop_quantities(self):
@@ -158,13 +158,22 @@ class PrestashopProductCombination(models.Model):
     @api.multi
     def recompute_prestashop_qty(self):
         for product_binding in self:
-            if product_binding.quantity != product_binding.qty_available:
-                product_binding.quantity = product_binding.qty_available
+            new_qty = product_binding._prestashop_qty()
+            if product_binding.quantity != new_qty:
+                product_binding.quantity = new_qty
         return True
 
-    @api.model
-    def _prestashop_qty(self, product):
-        return product.qty_available
+    def _prestashop_qty(self):
+        locations = self.env['stock.location'].search([
+            ('id', 'child_of', self.backend_id.warehouse_id.lot_stock_id.id),
+            ('prestashop_synchronized', '=', True),
+            ('usage', '=', 'internal'),
+        ])
+        return self.with_context(location=locations.ids).qty_available
+
+    #@api.model
+    #def _prestashop_qty(self, product):
+    #    return product.qty_available
 
 
 class ProductAttribute(models.Model):

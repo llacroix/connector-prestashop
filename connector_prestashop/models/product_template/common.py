@@ -37,9 +37,10 @@ class ProductTemplate(models.Model):
             # Recompute product template PrestaShop qty
             template.mapped('prestashop_bind_ids').recompute_prestashop_qty()
             # Recompute variant PrestaShop qty
-            template.mapped(
+            variants = template.mapped(
                 'product_variant_ids.prestashop_bind_ids'
-            ).recompute_prestashop_qty()
+            )
+            variants.recompute_prestashop_qty()
         return True
 
 
@@ -120,6 +121,11 @@ class PrestashopProductTemplate(models.Model):
         ])
         return self.with_context(location=locations.ids).qty_available
 
+    #@api.multi
+    #def write(self, values):
+    #    res = super(PrestashopProductTemplate, self).write(values)
+    #    return res
+
 
 @prestashop
 class TemplateAdapter(GenericAdapter):
@@ -166,7 +172,9 @@ class ProductInventoryAdapter(GenericAdapter):
                 client.edit(
                     self._prestashop_model, {self._export_node_name: stock})
             # TODO: investigate the silent errors
-            except PrestaShopWebServiceError:
+            except PrestaShopWebServiceError as exc:
                 pass
-            except ElementTree.ParseError:
+                raise exc
+            except ElementTree.ParseError as exc:
                 pass
+                raise exc

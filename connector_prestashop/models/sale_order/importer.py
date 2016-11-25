@@ -292,6 +292,7 @@ class SaleOrderImport(PrestashopImporter):
                 'order_id': erp_order.odoo_id.id,
                 'product_id':
                     erp_order.odoo_id.carrier_id.product_id.id,
+                'product_uom_qty': 1,
                 'price_unit':  shipping_total,
                 'is_delivery': True
             })
@@ -362,6 +363,12 @@ class SaleOrderLineMapper(ImportMapper):
         else:
             price_unit = record[key]
         return {'price_unit': price_unit}
+
+    @mapping
+    def product_uos_qty(self, record):
+        return {
+            'product_uos_qty': record['product_quantity'],
+        }
 
     @mapping
     def product_id(self, record):
