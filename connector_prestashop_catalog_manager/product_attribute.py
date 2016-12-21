@@ -52,22 +52,40 @@ def product_attribute_written(session, model_name, record_id, fields=None):
     model = session.pool.get(model_name)
     record = model.browse(session.cr, session.uid,
                           record_id, context=session.context)
+
+    if session.context.get('active_model') == 'product.template':
+        template_obj = session.env['product.template']
+        by_attribute = lambda x: record.id in x.attribute_value_ids.ids
+        template = template_obj.browse(session.context['active_id'])
+        variants = template.product_variant_ids.filtered(by_attribute)
+
+        for variant in variants:
+            for binding in variant.prestashop_bind_ids:
+                export_record.delay(
+                    session,
+                    'prestashop.product.combination',
+                    binding.id,
+                    {"price": fields['price_extra']},
+                    priority=20
+                )
+
     for binding in record.prestashop_bind_ids:
-        export_record.delay(session, 'prestashop.product.combination.option',
+        export_record.delay(session, 'prestashop.product.combination.option.value',
                             binding.id, fields, priority=20)
 
 
-@on_record_write(model_names='produc.attribute.value')
-def attribute_option_written(session, model_name, record_id, fields=None):
-    if session.context.get('connector_no_export'):
-        return
-    model = session.pool.get(model_name)
-    record = model.browse(session.cr, session.uid,
-                          record_id, context=session.context)
-    for binding in record.prestashop_bind_ids:
-        export_record.delay(session,
-                            'prestashop.product.combination.option.value',
-                            binding.id, fields, priority=20)
+#@on_record_write(model_names='produc.attribute.value')
+#def attribute_option_written(session, model_name, record_id, fields=None):
+#    import pdb; pdb.set_trace()
+#    if session.context.get('connector_no_export'):
+#        return
+#    model = session.pool.get(model_name)
+#    record = model.browse(session.cr, session.uid,
+#                          record_id, context=session.context)
+#    for binding in record.prestashop_bind_ids:
+#        export_record.delay(session,
+#                            'prestashop.product.combination.option.value',
+#                            binding.id, fields, priority=20)
 
 
 @prestashop

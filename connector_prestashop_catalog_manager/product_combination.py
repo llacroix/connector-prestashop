@@ -200,9 +200,19 @@ class ProductCombinationExportMapper(TranslationPrestashopExportMapper):
 
     @mapping
     def _unit_price_impact(self, record):
-        tax = record.taxes_id[:1]
-        factor_tax = tax.price_include and (1 + tax.amount) or 1.0
-        return {'price': str(record.impact_price / factor_tax)}
+        #tax = record.taxes_id[:1]
+        #factor_tax = tax.price_include and (1 + tax.amount) or 1.0
+        #return {'price': str(record.impact_price / factor_tax)}
+        price_obj = self.session.env['product.attribute.price']
+        template_id = record.product_tmpl_id.id
+
+        value_ids = record.attribute_value_ids.ids
+        prices = price_obj.search([
+            ['product_tmpl_id', '=', template_id],
+            ['value_id', 'in', value_ids]
+        ]).mapped(lambda x: x.price_extra)
+
+        return {'price': str(sum(prices))}
 
     @mapping
     def cost_price(self, record):

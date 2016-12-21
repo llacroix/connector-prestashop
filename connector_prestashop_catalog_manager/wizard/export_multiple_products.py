@@ -2,6 +2,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from openerp import models, fields, api
+from openerp.addons.connector_prestashop.unit.exporter import export_record
 import unicodedata
 import re
 
@@ -136,3 +137,28 @@ class ExportMultipleProducts(models.TransientModel):
                 for tmpl in presta_tmpl:
                     if ' ' in tmpl.link_rewrite:
                         tmpl.link_rewrite = get_slug(tmpl.link_rewrite)
+
+                self.reexport_template(presta_tmpl)
+
+    @api.multi
+    def reexport_template(self, templates):
+    	session = self.env
+        session.env = self.env 
+
+        for template in templates:
+            for binding in template.prestashop_bind_ids:
+                export_record.delay(
+                    session,
+                    'prestashop.product.template',
+                    binding.id,
+                    priority=20
+                )
+
+            for variant in template.product_variant_ids:
+                 for binding in variant.prestashop_bind_ids:
+                     export_record.delay(
+                         session,
+                         'prestashop.product.combination',
+                         binding.id,
+                         priority=20
+                     )
