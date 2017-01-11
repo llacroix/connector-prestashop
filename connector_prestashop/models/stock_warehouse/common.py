@@ -54,6 +54,7 @@ class PrestashopShop(models.Model):
         store=True,
     )
     default_url = fields.Char('Default url')
+    id_category = fields.Integer('Shop Category ID')
 
 
 @prestashop

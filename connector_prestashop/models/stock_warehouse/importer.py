@@ -14,6 +14,7 @@ class ShopImportMapper(ImportMapper):
     direct = [
         ('name', 'name'),
         (backend_to_m2o('id_shop_group'), 'shop_group_id'),
+        ('id_category', 'id_category'),
     ]
 
     @mapping

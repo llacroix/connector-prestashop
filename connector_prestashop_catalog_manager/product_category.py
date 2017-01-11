@@ -128,7 +128,11 @@ class ProductCategoryExportMapper(TranslationPrestashopExportMapper):
     @mapping
     def parent_id(self, record):
         if not record['parent_id']:
-            return {'id_parent': 2}
+            shop = (
+                record.default_shop_id or
+                self.env['prestashop.shop'].search([], limit=1)
+            )
+            return {'id_parent': shop.id_category}
         category_binder = self.binder_for('prestashop.product.category')
         ext_categ_id = category_binder.to_backend(
             record.parent_id.id, wrap=True)

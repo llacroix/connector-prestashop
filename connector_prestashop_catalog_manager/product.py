@@ -55,6 +55,7 @@ def prestashop_product_template_create(session, model_name, record_id, fields):
 def prestashop_product_template_write(session, model_name, record_id, fields):
     if session.context.get('connector_no_export'):
         return
+
     fields = list(set(fields).difference(set(INVENTORY_FIELDS)))
     if fields:
         export_record.delay(
@@ -244,10 +245,11 @@ class ProductTemplateExport(TranslationPrestashopExporter):
                     )
 
     def export_variants(self):
+        #import pdb; pdb.set_trace()
         combination_obj = self.session.env['prestashop.product.combination']
         for product in self.erp_record.product_variant_ids:
-            if not product.attribute_value_ids:
-                continue
+            #if not product.attribute_value_ids:
+            #    continue
             combination_ext_id = combination_obj.search([
                 ('backend_id', '=', self.backend_record.id),
                 ('odoo_id', '=', product.id),
@@ -261,11 +263,17 @@ class ProductTemplateExport(TranslationPrestashopExporter):
                     })
             # If a template has been modified then always update PrestaShop
             # combinations
-            export_record.delay(
+            #export_record.delay(
+            #    self.session,
+            #    'prestashop.product.combination',
+            #    combination_ext_id.id, priority=50,
+            #    eta=timedelta(seconds=20))
+
+            export_record(
                 self.session,
                 'prestashop.product.combination',
-                combination_ext_id.id, priority=50,
-                eta=timedelta(seconds=20))
+                combination_ext_id.id
+            )
 
     def _not_in_variant_images(self, image):
         images = []
@@ -297,6 +305,8 @@ class ProductTemplateExport(TranslationPrestashopExporter):
             product.update_prestashop_quantities()
 
     def _after_export(self):
+        #import pdb; pdb.set_trace()
+        self.erp_record.prestashop_id = int(self.prestashop_id)
         self.check_images()
         self.export_variants()
         self.update_quantities()
@@ -346,12 +356,23 @@ class ProductTemplateExportMapper(TranslationPrestashopExportMapper):
                 {'id': binder.to_backend(category.id, wrap=True)})
         return ext_categ_ids
 
+    def _get_combinations(self, record):
+        return (
+            record.odoo_id.product_variant_ids
+            .mapped(lambda x: x.prestashop_bind_ids)
+            .mapped(lambda x: {"id": x.prestashop_id})
+        )
+
     @mapping
     def associations(self, record):
         return {
             'associations': {
                 'categories': {
-                    'category_id': self._get_product_category(record)},
+                    'category': self._get_product_category(record)
+                },
+                'combinations': {
+                    'combination': self._get_combinations(record)
+                }
             }
         }
 
@@ -386,14 +407,20 @@ class ProductTemplateExportMapper(TranslationPrestashopExportMapper):
             ('meta_title', 'meta_title'),
             ('meta_description', 'meta_description'),
             ('meta_keywords', 'meta_keywords'),
-            ('tags', 'tags'),
+            #('tags', 'tags'),
             ('available_now', 'available_now'),
             ('available_later', 'available_later'),
             ('description_short_html', 'description_short'),
             ('description_html', 'description'),
         ]
 
+        record.with_context(connector_no_export=True).link_rewrite = (
+            record.link_rewrite or get_slug(record.name)
+        )
+
         trans = TranslationPrestashopExporter(self.connector_env)
         translated_fields = self.convert_languages(
-            trans.get_record_by_lang(record.id), translatable_fields)
+            trans.get_record_by_lang(record.id),
+            translatable_fields
+        )
         return translated_fields
